@@ -1,0 +1,12 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"module": "CommonJS",
+		"rootDir": "./src",
+		"outDir": "lib/cjs",
+		"declaration": true,                   /* Generates corresponding '.d.ts' file. */
+		"declarationMap": true,                /* Generates a sourcemap for each corresponding '.d.ts' file. */
+		"declarationDir": "lib/types"
+	},
+	"include": ["src"],
+}

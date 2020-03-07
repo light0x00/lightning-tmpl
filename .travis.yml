@@ -1,0 +1,11 @@
+if: commit_message !~ /(no-deploy|wip)/
+os:
+    - linux
+    - osx
+language: node_js
+node_js:
+    - "12"
+before_install: yarn
+install: yarn run build:prod
+script:
+    - yarn run test
