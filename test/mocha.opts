@@ -1,3 +1,4 @@
 --require ts-node/register
 --require tsconfig-paths/register
---inspect=9229
+--DEBUG=tmpl
+--bail
