@@ -39,7 +39,7 @@ export class Token implements IToken {
 		return this._proto
 	}
 
-	setLocaltion(lineBegin: number, colBegin: number, lineEnd: number, colEnd: number) {
+	setLocation(lineBegin: number, colBegin: number, lineEnd: number, colEnd: number) {
 		this._lineBegin = lineBegin
 		this._colBegin = colBegin
 		this._lineEnd = lineEnd
@@ -55,12 +55,9 @@ export class Token implements IToken {
 }
 
 type char = string
-interface IReader {
-	read(): char
-	peek(): char
-}
+const EOF_CHR = ""
 
-export class GeneralReader implements IReader {
+class Reader {
 	private text: string
 	private index = 0
 	constructor(text: string) {
@@ -72,16 +69,19 @@ export class GeneralReader implements IReader {
 		this.index++
 		return chr
 	}
-	peek(): string {
-		return this.index == this.text.length ? "" : this.text[this.index]
+	peek(i = 0): string {
+		return this.index == this.text.length ? "" : this.text[this.index + i]
+	}
+	readArea(length :number):string{
+		return this.text.substr(this.index,length)
 	}
 }
 
-export let CONTENT = new TokenPro("CONTENT")
-export let INTERPOLATE_DELIMITER_START = new TokenPro("INTERPOLATE_DELIMITER_START")
-export let ESCAPE_DELIMITER_START = new TokenPro("ESCAPE_DELIMITER_START")
-export let EVALUATE_DELIMITER_START = new TokenPro("EVALUATE_DELIMITER_START")
-export let DELIMITER_END = new TokenPro("DELIMITER_END")
+export let CONTENT = new TokenPro("Content")
+export let IN_DS = new TokenPro("<%=")  //INTERPOLATE_DELIMITER_START
+export let ES_DS = new TokenPro("<%-") //ESCAPE_DELIMITER_START
+export let EV_DS = new TokenPro("<%")  //EVALUATE_DELIMITER_START
+export let DE = new TokenPro("%>") //DELIMITER_END
 
 abstract class AbstractLexer<T>{
 	private _buffer = new Queue<T>();
@@ -94,7 +94,7 @@ abstract class AbstractLexer<T>{
 		return this._buffer.dequeue()!
 	}
 	private fill(i: number) {
-		while (this._buffer.size() <= i ) {
+		while (this._buffer.size() <= i) {
 			this._buffer.enqueue(this.createToken())
 		}
 	}
@@ -103,76 +103,77 @@ abstract class AbstractLexer<T>{
 
 export class Lexer extends AbstractLexer<Token>{
 
-	private reader: IReader
-	private current: char = ""
+	private reader: Reader
 	private _hasMore = true
 
 	private _lineCount = 1
-	private _colOffset = 0
+	private _colOffset = 1
 
-	constructor(reader: IReader) {
+	constructor(text: string) {
 		super()
-		this.reader = reader
-		this.readChr()
+		this.reader = new Reader(text)
 	}
 
 	protected hasMore(): boolean {
 		return this._hasMore
 	}
 
-	protected getEOF(): Token {
-		throw new Error("Method not implemented.")
-	}
-
 	private readChr() {
-		if (this.current != "\n") {
+		if (this.peekChr() != "\n") {
 			this._colOffset += 1
 		} else {
 			this._lineCount += 1
 			this._colOffset = 1
 		}
-		this.current = this.reader.read()
-		return this.current
+		return this.reader.read()
 	}
 
-	private peekChr() {
-		return this.reader.peek()
+	private peekChr(i = 0) {
+		return this.reader.peek(i)
 	}
 
 	createToken(): Token {
 		let lineBegin = this._lineCount, colBegin = this._colOffset
 
+		let look = this.peekChr()
+
 		let result: Token
-		if (this.current == "<") {
+		if (look == "<") {
 			result = this.delimiterStart()
-		} else if (this.current == "%") {
+		} else if (look == "%") {
 			result = this.delimiterEnd()
-		} else if (this.current != "") {
+		} else if (look != EOF_CHR) {
 			result = this.content()
 		}
 		//EOF
 		else {
 			this._hasMore = false
-			result = new Token("", EOF)
+			result = new Token(EOF_CHR, EOF)
 		}
 
 		let lineEnd = this._lineCount, colEnd = this._colOffset - 1
-		result.setLocaltion(lineBegin, colBegin, lineEnd, colEnd)
+		result.setLocation(lineBegin, colBegin, lineEnd, colEnd)
 		return result
 	}
 
+	private isOuterIfDelimiter: boolean = true
+
 	private delimiterStart(): Token {
-		if (this.peekChr() == "%") {
+		/* 
+		默认: this.peekChr(0) == "<"
+		*/
+		if (this.peekChr(1) == "%") {
 			this.readChr() // <
 			this.readChr() // %
-			if (this.current == "-") {
+			this.isOuterIfDelimiter = false
+			if (this.peekChr(0) == "-") {
 				this.readChr() // -
-				return new Token("<%-", ESCAPE_DELIMITER_START)
-			} else if (this.current == "=") {
+				return new Token("<%-", ES_DS)
+			} else if (this.peekChr(0) == "=") {
 				this.readChr() // =
-				return new Token("<%=", INTERPOLATE_DELIMITER_START)
+				return new Token("<%=", IN_DS)
 			} else {
-				return new Token("<%", EVALUATE_DELIMITER_START)
+				return new Token("<%", EV_DS)
 			}
 		} else {
 			return this.content()!
@@ -180,44 +181,80 @@ export class Lexer extends AbstractLexer<Token>{
 	}
 
 	private delimiterEnd(): Token {
-		if (this.peekChr() == ">") {
+		/* 
+		默认: this.peekChr(0) == "%"
+		*/
+		if (this.peekChr(1) == ">") {
 			this.readChr()  // %
 			this.readChr()  // >
-			return new Token("%>", DELIMITER_END)
+			this.isOuterIfDelimiter = true
+			return new Token("%>", DE)
 		} else {
 			return this.content()!
 		}
 	}
+	// 对包含「 " 」的字符串 转义
 
 	private content(): Token {
-		let lexeme = this.current
+		/* 
+		进入此状态,默认已经有一个字符满足下列条件:
+		not < 
+		not %
+		not \
+		not EOF
+		*/
+		let lexeme = ""
+
 		while (this._hasMore) {
-			this.readChr()
-			if (this.current == "<") {
-				if (this.peekChr() == "%") {
+			//
+			if ((this.peekChr(0) == "<") || (this.peekChr(0) == "%")) {
+				if (this.peekChr(1) == "%" || this.peekChr(1) == ">") {
 					break
-				}
-				else {
-					lexeme += this.current
+				} else {
+					lexeme += this.readChr()
 				}
 			}
-			else if (this.current == "%") {
-				if (this.peekChr() == ">") {
-					break
+			// else if (this.peekChr(0) == "%") {
+			// 	if (this.peekChr(1) == ">") {
+			// 		break
+			// 	}
+			// 	else {
+			// 		lexeme += this.readChr()
+			// 	}
+			// }
+			else if (this.peekChr(0) != EOF_CHR) {
+				/* 
+				1. \n 转义为字符 "\n"
+				2. 「"」转义为 「\"」 (对代码块之外)
+				3. \<% \%> 去掉「\」
+				*/
+				if (this.peekChr(0) == "\n") {
+					this.readChr()
+					lexeme += "\\n"
 				}
-				else {
-					lexeme += this.current
+				//  " => \"
+				else if (this.peekChr(0) == "\"" && this.isOuterIfDelimiter) {
+					this.readChr()
+					lexeme += "\\\""
 				}
-			}
-			else if (this.current != "") {
-				lexeme += this.current
+				// \<% or \%>
+				else if (
+					this.peekChr(0) == "\\" &&
+					((this.peekChr(1) == "<" && this.peekChr(2) == "%") ||
+						(this.peekChr(1) == "%" && this.peekChr(2) == ">"))
+				) {
+					this.readChr()  //丢弃转义符号 `\`
+					lexeme += this.readChr() + this.readChr() //消费 `<%` or `%>`
+				} else {
+					lexeme += this.readChr()
+				}
 			}
 			//EOF
 			else {
 				break
 			}
 		}
-		return new Token(lexeme,CONTENT)
+		return new Token(lexeme, CONTENT)
 	}
 
 }
