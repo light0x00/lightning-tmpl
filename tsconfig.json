@@ -1,14 +1,22 @@
+/* 开发环境配置 */
 {
 	"extends": "./tsconfig.base.json",
-	"references": [
-		{
-			"path": "./tsconfig.cjs.json"
+	"compilerOptions": {
+		"module": "CommonJS",
+		"rootDir": ".",
+		"outDir": "dist",
+		"baseUrl": ".",
+		"paths": {
+			"~/*": [
+				"src/*"
+			]
 		},
-		{
-			"path": "./tsconfig.esm.json"
-		},
-		{
-			"path": "./test/tsconfig.json"
-		}
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true
+	},
+	"include": [
+		"src",
+		"test"
 	]
 }
