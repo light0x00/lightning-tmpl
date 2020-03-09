@@ -4,16 +4,50 @@
 	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
 	"version": "0.2.0",
 	"configurations": [
+		/* 
+			ts-node:
+				- 方便,但调试时 step in 有时会失效
+
+			预编译+源码映射: 
+				- 稳定,需要先启动一个后台编译任务watch
+		*/
+		/* 通过预编译+源码映射的方式启动TS*/
 		{
 			"type": "node",
+			"name": "DEBUG(JS)",
 			"request": "launch",
-			"name": "RUN(Benchmark)",
-			"args": [
-				"${file}",
+			"sourceMaps": true,
+			"program": "${file}",
+			"runtimeExecutable": "node",
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			],
+			"runtimeArgs": [
+				"-r",
+				"module-alias/register"
 			],
 			"console": "integratedTerminal",
-		}
-		,
+			"protocol": "inspector",
+		},
+		/* 通过预编译+源码映射的方式启动Mocha */
+		{
+			"type": "node",
+			"name": "DEBUG MOCHA(JS)",
+			"request": "launch",
+			"sourceMaps": true,
+			"program": "${file}",
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			],
+			"runtimeArgs": [
+				"-r",
+				"module-alias/register"
+			],
+			"console": "integratedTerminal",
+			"protocol": "inspector",
+		},
+		/* 通过 ts-node 运行TS */
 		{
 			"type": "node",
 			"request": "launch",
@@ -25,43 +59,41 @@
 				"-r",
 				"ts-node/register",
 				"-r",
-				"tsconfig-paths/register"
+				"tsconfig-paths/register",
 			],
 			"env": {
-				"DEBUG": "jsonx",
+				"DEBUG": "tmpl",
 				"TS_NODE_PROJECT": "tsconfig.json"
 			},
 			"console": "integratedTerminal",
 			"protocol": "inspector",
 		},
+		/* 通过 ts-node 运行 Mocha */
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "DEBUG(MOCHA)",
+			"name": "DEBUG MOCHA(TS)",
 			"program": "${workspaceFolder}/node_modules/.bin/mocha",
 			"args": [
 				"${file}",
 				"--no-timeouts"
 			],
-			"runtimeArgs": [
-				"-r",
-				"ts-node/register",
-				"-r",
-				"tsconfig-paths/register"
-			],
 			"env": {
-				"DEBUG": "jsonx",
-				"TS_NODE_PROJECT": "${workspaceFolder}/test/tsconfig.json",
+				"DEBUG": "tmpl",
+				"TS_NODE_PROJECT": "tsconfig.json"
 			},
 			"console": "integratedTerminal",
 			"protocol": "inspector",
 		},
+		/* 运行node */
 		{
 			"type": "node",
-			"request": "attach",
-			"name": "DEBUG(attach)",
-			"protocol": "inspector",
-			"port": 9229
+			"request": "launch",
+			"name": "RUN(Node)",
+			"args": [
+				"${file}",
+			],
+			"console": "integratedTerminal",
 		}
 	]
 }

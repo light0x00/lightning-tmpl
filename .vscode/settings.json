@@ -3,5 +3,5 @@
 	/* auto fix lint */
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": true
-	},
+	}
 }
