@@ -1,11 +1,11 @@
 {
-	"name": "fast-template",
-	"version": "0.0.0",
+	"name": "light-template",
+	"version": "0.0.0-alpha.2",
 	"license": "MIT",
 	"scripts": {
-		"test": "yarn mocha test/**/*.test.ts",
+		"test": "yarn nyc mocha test/**/*.test.ts",
 		"build": "yarn tsc -b tsconfig.json",
-		"build:prod": "yarn tsc -b tsconfig.json && webpack --config-register esm",
+		"build:prod": "yarn tsc -b tsconfig.prod.json && webpack --config-register esm",
 		"lint": "eslint --fix src/**/*.ts test/**/*.ts",
 		"release": "yarn publish --registry https://registry.npmjs.org && npm publish --registry https://npm.pkg.github.com/"
 	},
@@ -29,6 +29,7 @@
 		"@typescript-eslint/eslint-plugin": "^2.21.0",
 		"@typescript-eslint/parser": "^2.21.0",
 		"benchmark": "^2.1.4",
+		"clean-webpack-plugin": "^3.0.0",
 		"cross-env": "^7.0.1",
 		"eslint": "^6.8.0",
 		"esm": "^3.2.25",
