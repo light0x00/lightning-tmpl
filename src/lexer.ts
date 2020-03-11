@@ -196,15 +196,14 @@ export class Lexer extends AbstractLexer<Token>{
 		let startIndex = this.lastIndex
 		let replaces: [number, string][] = [] /* 记录当前token中需要转义、反转义的字符 */
 		while (this._hasMore) {
-			//
 			if ((this.peekChr(0) == "<" && this.peekChr(1) == "%") || (this.peekChr(0) == "%" && this.peekChr(1) == ">")) {
 				break
 			}
 			/* 
-				1. \n 转义为字符 "\n"					多一个字符
-				2. 「"」转义为 「\"」 (对代码块之外)		多一个字符
-				3. \<% \%> 去掉「\」					少一个字符
-				*/
+			1. \n 转义为字符 "\n"					多一个字符
+			2. 「"」转义为 「\"」 (对代码块之外)		多一个字符
+			3. \<% \%> 去掉「\」					少一个字符
+			*/
 			else if (this.peekChr(0) == "\n"  && this.isOuterOfDelimiter ) {
 				replaces.push([this.lastIndex, "\\n"])
 				this.readChr()
