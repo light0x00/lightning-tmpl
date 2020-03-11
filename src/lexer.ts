@@ -1,10 +1,15 @@
-import { TokenPro, IToken, Terminal, ILexer, EOF } from "@parser-generator/definition"
+import { TokenPro, IToken, Terminal, EOF } from "@parser-generator/definition"
 import Queue from "typescript-collections/dist/lib/Queue"
+import { MutableString } from "./common"
+
+const DEFAULT_SOURCE_NAME = "anonymous.tmpl"
 
 export class Token implements IToken {
 
 	private _lexeme: string
 	private _proto: Terminal
+
+	private _sourceName: string = DEFAULT_SOURCE_NAME
 
 	private _lineBegin = -1
 	private _colBegin = -1
@@ -34,6 +39,12 @@ export class Token implements IToken {
 	get colEnd() {
 		return this._colEnd
 	}
+	get sourceName() {
+		return this._sourceName
+	}
+	set sourceName(source: string) {
+		this._sourceName = source
+	}
 
 	key(): Terminal {
 		return this._proto
@@ -54,28 +65,7 @@ export class Token implements IToken {
 	}
 }
 
-type char = string
 const EOF_CHR = ""
-
-class Reader {
-	private text: string
-	private index = 0
-	constructor(text: string) {
-		this.text = text
-	}
-
-	read(): string {
-		let chr = this.peek()
-		this.index++
-		return chr
-	}
-	peek(i = 0): string {
-		return this.index == this.text.length ? "" : this.text[this.index + i]
-	}
-	readArea(length :number):string{
-		return this.text.substr(this.index,length)
-	}
-}
 
 export let CONTENT = new TokenPro("Content")
 export let IN_DS = new TokenPro("<%=")  //INTERPOLATE_DELIMITER_START
@@ -103,15 +93,21 @@ abstract class AbstractLexer<T>{
 
 export class Lexer extends AbstractLexer<Token>{
 
-	private reader: Reader
+	//处理状态
+	private text: string
+	private lastIndex = 0
 	private _hasMore = true
 
+	//行列计数
 	private _lineCount = 1
 	private _colOffset = 1
 
-	constructor(text: string) {
+	private _sourceNmae: string
+
+	constructor(text: string, sourceName: string = DEFAULT_SOURCE_NAME) {
 		super()
-		this.reader = new Reader(text)
+		this.text = text
+		this._sourceNmae = sourceName
 	}
 
 	protected hasMore(): boolean {
@@ -119,17 +115,19 @@ export class Lexer extends AbstractLexer<Token>{
 	}
 
 	private readChr() {
-		if (this.peekChr() != "\n") {
+		let chr = this.peekChr()
+		if (chr != "\n") {
 			this._colOffset += 1
 		} else {
 			this._lineCount += 1
 			this._colOffset = 1
 		}
-		return this.reader.read()
+		++this.lastIndex
+		// return chr
 	}
 
 	private peekChr(i = 0) {
-		return this.reader.peek(i)
+		return this.lastIndex == this.text.length ? EOF_CHR : this.text[this.lastIndex + i]
 	}
 
 	createToken(): Token {
@@ -153,6 +151,7 @@ export class Lexer extends AbstractLexer<Token>{
 
 		let lineEnd = this._lineCount, colEnd = this._colOffset - 1
 		result.setLocation(lineBegin, colBegin, lineEnd, colEnd)
+		result.sourceName = this._sourceNmae
 		return result
 	}
 
@@ -193,67 +192,49 @@ export class Lexer extends AbstractLexer<Token>{
 			return this.content()!
 		}
 	}
-	// 对包含「 " 」的字符串 转义
-
 	private content(): Token {
-		/* 
-		进入此状态,默认已经有一个字符满足下列条件:
-		not < 
-		not %
-		not \
-		not EOF
-		*/
-		let lexeme = ""
-
+		let startIndex = this.lastIndex
+		let replaces: [number, string][] = [] /* 记录当前token中需要转义、反转义的字符 */
 		while (this._hasMore) {
 			//
-			if ((this.peekChr(0) == "<") || (this.peekChr(0) == "%")) {
-				if (this.peekChr(1) == "%" || this.peekChr(1) == ">") {
-					break
-				} else {
-					lexeme += this.readChr()
-				}
+			if ((this.peekChr(0) == "<" && this.peekChr(1) == "%") || (this.peekChr(0) == "%" && this.peekChr(1) == ">")) {
+				break
 			}
-			// else if (this.peekChr(0) == "%") {
-			// 	if (this.peekChr(1) == ">") {
-			// 		break
-			// 	}
-			// 	else {
-			// 		lexeme += this.readChr()
-			// 	}
-			// }
-			else if (this.peekChr(0) != EOF_CHR) {
-				/* 
-				1. \n 转义为字符 "\n"
-				2. 「"」转义为 「\"」 (对代码块之外)
-				3. \<% \%> 去掉「\」
+			/* 
+				1. \n 转义为字符 "\n"					多一个字符
+				2. 「"」转义为 「\"」 (对代码块之外)		多一个字符
+				3. \<% \%> 去掉「\」					少一个字符
 				*/
-				if (this.peekChr(0) == "\n") {
-					this.readChr()
-					lexeme += "\\n"
-				}
-				//  " => \"
-				else if (this.peekChr(0) == "\"" && this.isOuterIfDelimiter) {
-					this.readChr()
-					lexeme += "\\\""
-				}
-				// \<% or \%>
-				else if (
-					this.peekChr(0) == "\\" &&
-					((this.peekChr(1) == "<" && this.peekChr(2) == "%") ||
-						(this.peekChr(1) == "%" && this.peekChr(2) == ">"))
-				) {
-					this.readChr()  //丢弃转义符号 `\`
-					lexeme += this.readChr() + this.readChr() //消费 `<%` or `%>`
-				} else {
-					lexeme += this.readChr()
-				}
+			else if (this.peekChr(0) == "\n") {
+				replaces.push([this.lastIndex, "\\n"])
+				this.readChr()
+			}
+			//  " => \"
+			else if (this.peekChr(0) == "\"" && this.isOuterIfDelimiter) {
+				replaces.push([this.lastIndex, "\\\""])
+				this.readChr()
+				// replaceItems[length] = "\\\""
+			}
+			// \<% or \%>
+			else if (
+				this.peekChr(0) == "\\" &&
+				((this.peekChr(1) == "<" && this.peekChr(2) == "%") ||
+					(this.peekChr(1) == "%" && this.peekChr(2) == ">"))
+			) {
+				replaces.push([this.lastIndex, ""])
+				this.readChr()
+				this.readChr()	// `<` or `%`
+				this.readChr()  // `%` or `>`
+
+			} else if (this.peekChr(0) != EOF_CHR) {
+				this.readChr()
 			}
 			//EOF
 			else {
 				break
 			}
 		}
+		let lexeme = MutableString.replaceSubstring(this.text, replaces, startIndex, this.lastIndex)
 		return new Token(lexeme, CONTENT)
 	}
 

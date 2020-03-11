@@ -1,10 +1,10 @@
-import { Lexer, Token, CONTENT, EV_DS, DE, IN_DS, ES_DS } from "~/lexer"
+import { Lexer, Token, CONTENT, EV_DS, DE, IN_DS } from "~/lexer"
 import { EOF } from "@parser-generator/definition"
 import should from "should"
 
 function mapTokens<T>(text: string, fn: (t: Token) => T): T[] {
 	let result = []
-	let lexer = new Lexer(text)
+	let lexer = new Lexer(text,"")
 	for (let t = lexer.next(); t.proto != EOF; t = lexer.next()) {
 		result.push(fn(t))
 	}
