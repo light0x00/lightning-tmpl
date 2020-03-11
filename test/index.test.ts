@@ -1,7 +1,7 @@
-import { template, TemplateOptions } from "~/index"
+import template from "~/index"
 import should from "should"
 
-let render = (tmpl: string, data: any, options: TemplateOptions = { variable: "data" }) => template(tmpl, options).apply(data)
+let render = (tmpl: string, data: any, options = { variable: "data" }) => template(tmpl, options).render(data)
 
 describe(`Integration Test`, () => {
 

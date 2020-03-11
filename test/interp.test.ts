@@ -3,7 +3,12 @@ import parser from "~/parser"
 import { CodegenVisitor } from "~/interp"
 import should from "should"
 
-const getInterpResult = (text: string) => new CodegenVisitor(parser.parse(new Lexer(text))).apply()
+const getInterpResult = (text: string) => {
+	return new CodegenVisitor(
+		parser.parse(new Lexer(text,"")),
+		{ loader: (s) => { throw new Error("ASTLoader Not Implement") } }
+	).apply()
+}
 
 describe(`Interpreter Test`, () => {
 
