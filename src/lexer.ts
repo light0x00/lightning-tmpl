@@ -155,7 +155,7 @@ export class Lexer extends AbstractLexer<Token>{
 		return result
 	}
 
-	private isOuterIfDelimiter: boolean = true
+	private isOuterOfDelimiter: boolean = true
 
 	private delimiterStart(): Token {
 		/* 
@@ -164,7 +164,7 @@ export class Lexer extends AbstractLexer<Token>{
 		if (this.peekChr(1) == "%") {
 			this.readChr() // <
 			this.readChr() // %
-			this.isOuterIfDelimiter = false
+			this.isOuterOfDelimiter = false
 			if (this.peekChr(0) == "-") {
 				this.readChr() // -
 				return new Token("<%-", ES_DS)
@@ -186,7 +186,7 @@ export class Lexer extends AbstractLexer<Token>{
 		if (this.peekChr(1) == ">") {
 			this.readChr()  // %
 			this.readChr()  // >
-			this.isOuterIfDelimiter = true
+			this.isOuterOfDelimiter = true
 			return new Token("%>", DE)
 		} else {
 			return this.content()!
@@ -205,15 +205,14 @@ export class Lexer extends AbstractLexer<Token>{
 				2. 「"」转义为 「\"」 (对代码块之外)		多一个字符
 				3. \<% \%> 去掉「\」					少一个字符
 				*/
-			else if (this.peekChr(0) == "\n") {
+			else if (this.peekChr(0) == "\n"  && this.isOuterOfDelimiter ) {
 				replaces.push([this.lastIndex, "\\n"])
 				this.readChr()
 			}
 			//  " => \"
-			else if (this.peekChr(0) == "\"" && this.isOuterIfDelimiter) {
+			else if (this.peekChr(0) == "\"" && this.isOuterOfDelimiter) {
 				replaces.push([this.lastIndex, "\\\""])
 				this.readChr()
-				// replaceItems[length] = "\\\""
 			}
 			// \<% or \%>
 			else if (

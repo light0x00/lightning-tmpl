@@ -48,7 +48,6 @@ describe(`DFA Test`, () => {
 		]
 		should(actuality).eql(expectation)
 	})
-
 })
 
 describe(`Token Tag Test`, () => {
@@ -70,9 +69,15 @@ describe(`Token Tag Test`, () => {
 
 describe(`Charactor Escape & Unescape Test`, () => {
 
-	it("换行符应该被替换为`\\n` ", () => {
+	it("代码块之外的换行符应该被替换为`\\n` ", () => {
 		let actuality = getLexemes("<%-hello%>\n")
 		let expectation = ["<%-", "hello", "%>", "\\n"]
+		should(actuality).eql(expectation)
+	})
+
+	it("代码块之内的换行符不应该被替换为`\\n`", () => {
+		let actuality = getLexemes(`<%print('user.name')\n%>`)
+		let expectation = ["<%", "print('user.name')\n", "%>"]
 		should(actuality).eql(expectation)
 	})
 
@@ -112,7 +117,7 @@ user.name %>
 		)
 		let expectation = [
 			["<%=", 1, 1, 1, 3],
-			["\\nuser.name ", 1, 4, 2, 10],
+			["\nuser.name ", 1, 4, 2, 10],
 			["%>", 2, 11, 2, 12],
 			["\\n", 2, 13, 3, 0],
 		]
