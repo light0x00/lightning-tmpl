@@ -6,7 +6,6 @@ abstract class ASTNode {
 	constructor(eles: ASTElement[]) {
 		this.children = eles
 	}
-
 }
 
 export class FactorNode extends ASTNode {
@@ -39,6 +38,12 @@ export class EscapeNode extends ASTNode {
 
 export class EvaluateNode extends ASTNode {
 	get code(): Token {
+		return this.children[1] as Token
+	}
+}
+
+export class LinkNode extends ASTNode{
+	get sourceNameToken() : Token{
 		return this.children[1] as Token
 	}
 }

@@ -53,14 +53,13 @@ export function compile(tmpl: string, settings?: TemplateSettings): string {
 		variable: settings?.variable ?? "data",
 		soureMap: settings?.soureMap ?? false,
 		useWith: settings?.useWith ?? false,
-		sourceName: entrySourceName,
 		sourceLoader: settings?.sourceLoader ?? DEFAULT_SOURCE_LOADER,
 		onLoadSource: (source: string, sourceName: string) => {
 			if (sourceMapGenerator)
 				sourceMapGenerator.setSourceContent(sourceName, source)
 		}
 	}
-	let { source, mappings } = compile0(tmpl, compileSettings)
+	let { source, mappings } = compile0(tmpl, entrySourceName, compileSettings)
 	if (sourceMapGenerator) {
 		for (let m of mappings)
 			sourceMapGenerator.addMapping(m)
@@ -70,24 +69,26 @@ export function compile(tmpl: string, settings?: TemplateSettings): string {
 	return source
 }
 
-function compile0(entry: string, settings: {
+function compile0(entry: string, entrySourceName: string, settings: {
 	variable: string,
 	useWith: boolean,
 	soureMap: boolean,
-	sourceName: string,
 	sourceLoader: SourceLoader,
 	onLoadSource: (source: string, sourceName: string) => void
 }) {
-	let ast = parser.parse(new Lexer(entry, settings.sourceName))
+	let ast = parser.parse(new Lexer(entry, entrySourceName))
+
+	let astLoader = (sourceName: string) => {
+		let source = settings.sourceLoader(sourceName)
+		settings.onLoadSource(source, sourceName)
+		return parser.parse(new Lexer(source, sourceName))
+	}
 	let codegenOptions = {
 		variable: settings.variable,
 		useWith: settings.useWith,
 		soureMap: settings.soureMap,
+		sourceName: entrySourceName,
+		astLoader
 	}
-	let astLoader = ((sourceName: string) => {
-		let source = settings.sourceLoader(sourceName)
-		settings.onLoadSource(source, sourceName)
-		return parser.parse(new Lexer(source, sourceName))
-	})
-	return codegen(ast, { ...codegenOptions, astLoader })
+	return codegen(ast, codegenOptions)
 }

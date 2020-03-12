@@ -1,5 +1,5 @@
 import { NonTerminal, ParsingTable, ILexer, IToken } from "@parser-generator/definition"
-import table from "./table"
+import table from "./parsing-table"
 import { isIterable } from "@light0x00/shim"
 import  Stack from "typescript-collections/dist/lib/Stack"
 

@@ -6,7 +6,7 @@ import should from "should"
 const getInterpResult = (text: string) => {
 	return new CodegenVisitor(
 		parser.parse(new Lexer(text,"")),
-		{ loader: (s) => { throw new Error("ASTLoader Not Implement") } }
+		{ loader: (s) => { throw new Error("ASTLoader Not Implement") } , beforeAppend(){} }
 	).apply()
 }
 

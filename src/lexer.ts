@@ -71,6 +71,7 @@ export let CONTENT = new TokenPro("Content")
 export let IN_DS = new TokenPro("<%=")  //INTERPOLATE_DELIMITER_START
 export let ES_DS = new TokenPro("<%-") //ESCAPE_DELIMITER_START
 export let EV_DS = new TokenPro("<%")  //EVALUATE_DELIMITER_START
+export let LN_DS = new TokenPro("<%@") //LINK_DILIMITER_START
 export let DE = new TokenPro("%>") //DELIMITER_END
 
 abstract class AbstractLexer<T>{
@@ -171,6 +172,9 @@ export class Lexer extends AbstractLexer<Token>{
 			} else if (this.peekChr(0) == "=") {
 				this.readChr() // =
 				return new Token("<%=", IN_DS)
+			} else if (this.peekChr(0) == "@") {
+				this.readChr()  // @
+				return new Token("<%@",LN_DS) 
 			} else {
 				return new Token("<%", EV_DS)
 			}
@@ -204,7 +208,7 @@ export class Lexer extends AbstractLexer<Token>{
 			2. 「"」转义为 「\"」 (对代码块之外)		多一个字符
 			3. \<% \%> 去掉「\」					少一个字符
 			*/
-			else if (this.peekChr(0) == "\n"  && this.isOuterOfDelimiter ) {
+			else if (this.peekChr(0) == "\n" && this.isOuterOfDelimiter) {
 				replaces.push([this.lastIndex, "\\n"])
 				this.readChr()
 			}
