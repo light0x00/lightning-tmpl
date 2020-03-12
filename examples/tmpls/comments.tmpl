@@ -1,0 +1,9 @@
+<h2>Comment Total: <%= comments.length %> </h2>
+<div>
+<% for(let comment of comments) { %>
+	<p>
+		<strong> <%= comment.user %> : </strong>
+	 	<%- comment.content %> 
+	</p>
+<% } %>
+</div>

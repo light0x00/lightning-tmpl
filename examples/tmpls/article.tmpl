@@ -1,0 +1,8 @@
+<h1> <%= article.title %> </h1>
+<p> <%- article.content %> </p>
+
+<% let tags = article.tags %>
+<%@ tags.tmpl  %>
+
+<% let comments = article.comments %>
+<%@ comments.tmpl  %>
