@@ -9,10 +9,10 @@
 ## 特性
 
 - 用原生JS控制模版的渲染
+- 支持子模版链接
 - 支持模版调试
 
-![img](./docs/debug_demo.png)
-
+![img](./docs/debug-demo.png)
 
 ## 安装
 
@@ -55,7 +55,7 @@ let data = {
 	]
 }
 //编译
-let executor = template(tmpl, { variable: "data", soureMap: true })
+let executor = template(tmpl, { variable: "data", soureMap: true }) 
 //执行
 let result = executor.render(data)
 
@@ -76,11 +76,13 @@ console.log(result)
 </ul>
 ```
 
+更丰富的例子参考 ➡️ [示例](https://github.com/light0x00/light-template/examples)
+
 ## 语法
 
-语法基本与 [lodash.template](https://lodash.com/docs/4.17.15#template) 相同
+语法基本与 [lodash.template](https://lodash.com/docs/4.17.15#template) 相同,但新增了一个链接指令.
 
-**插值**
+**插值指令**
 
 `<%=`,顾名思义,就是插入一个值
 
@@ -96,7 +98,7 @@ console.log(result)
 // <p>Hello World<p>
 ```
 
-**HTML转义**
+**HTML转义指令**
 
 `<%-` 可用于转义HTML保留字符
 
@@ -112,15 +114,17 @@ console.log(result)
 // <p>&lt;img src=&quot;xss&quot;&gt;<p>
 ```
 
-**脚本块**
+**脚本块指令**
 
-`<%` `%>` 之间可以编写任意的JS代码
+`<%` `%>` 之间可以编写任意的JS代码,提供了一个内置的print函数,用于输出内容到最终的模版.
 
 ```ts
 let tmpl =`<ul>
-<% for(let user of users){
+<% 
+for(let user of users){
 	print('<li>'+user+'</li>')
-} %>
+} 
+%>
 </ul>`
 let data = ["Alice","Bob"]
 
@@ -131,6 +135,36 @@ console.log(result)
 // <ul>
 // <li>Alice</li><li>Bob</li>
 // </ul>
+```
+
+**链接子模版**
+
+`<%@` `%>` 之间可以指定要插入的子模版的名称,当light-template遇到链接指令时,都将要链接的模版名称传给加载器,由加载器返回模版的内容,然后进行编译. 需注意,这个名称不一定是路径名,只要可以标识一个唯一的模版即可.
+
+```ts
+let tmpls = new Map()
+tmpls.set("greeting.tmpl", `Hello,<%= user.name %>`)
+
+//模版加载器
+let sourceLoader = (sourceName) => {
+	if (!tmpls.has(sourceName))
+		throw new Error("Can't find template named " + sourceName)
+	return tmpls.get(sourceName)
+}
+
+//入口模版
+let entry = `<p><%@ greeting.tmpl %></p>`  // 使用 <%@ 链接一个子模版
+
+//编译
+let exe = template(entry, { variable: "user", sourceLoader, soureMap: true })
+
+//渲染
+let result = exe.render({ name: "Alice" })
+
+console.log(result)
+
+// output:
+// <p>Hello,Alice</p>
 ```
 
 **保留字符转义**
@@ -150,7 +184,7 @@ console.log(result)
 
 将模版编译为一个JavaScript函数, 该函数接收一个data,以拼接字符串的形式生成最终的模版.
 
-```
+```html
 <p><%= data.greeting %><p>
 ```
 
@@ -176,6 +210,8 @@ template(tmpl: string, options?: TemplateSettings): TemplateExecutor
 - TemplateSettings
 	- `variable?: string`,指定数据对象在模版中的变量名,可通过该变量引用数据对象
 	- `soureMap?: boolean`,是否生成sourceMap
+	- `sourceName? : string` ,指定入口模版的名称,在调试的时候方便区分模版.
+	- `sourceLoader? : (soureName :string)=>string`, 模版源码加载器,当要使用子模版嵌入指令(`<%@`)时须指定,该函数接收一个模版名称,返回模版内容.
 - TemplateExecutor
 	- `render(data :any)`,接收一个数据对象对模版进行渲染
 	- `source: string`,生成的渲染函数
@@ -185,7 +221,7 @@ template(tmpl: string, options?: TemplateSettings): TemplateExecutor
 ```ts
 compile(tmpl: string, settings?: TemplateSettings): string
 ```
-与template的区别是,此方法仅返回渲染函数的字符串形式.
+与template的区别是,此方法仅返回渲染函数的字符串形式. 
 
 ## 其他
 
