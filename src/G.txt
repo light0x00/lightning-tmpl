@@ -1,0 +1,22 @@
+====================================== Grammar ======================================
+<% import {FactorNode,InterpolateNode,EscapeNode,EvaluateNode,FactorsNode,TemplateNode} from "./ast" %>
+
+#TOKEN_PROTOTYPES
+CONTENT, 
+IN_DS,
+ES_DS,
+EV_DS,
+LN_DS,
+DE
+
+#GRAMMAR
+S->template;
+template -> factors  <% (e)=>new TemplateNode(e) %>;
+factors -> factor factors | NIL <% (e)=>new FactorsNode(e) %>;
+factor -> CONTENT | interpolate | escape | evaluate | link <% (e)=>new FactorNode(e) %>;
+link -> LN_DS CONTENT DE <% (e)=>new InterpolateNode(e) %>;
+interpolate -> IN_DS CONTENT DE <% (e)=>new InterpolateNode(e) %>;
+escape -> ES_DS CONTENT DE <% (e)=>new EscapeNode(e) %>;
+evaluate -> EV_DS CONTENT DE <% (e)=>new EvaluateNode(e) %>;
+
+
