@@ -37,8 +37,8 @@ describe(`Integration Test`, () => {
 		let tmpl =
 			`<p><%- data.name %><p>
 <p><%= data.desc %></p>
-<ul><% for(let hobby of data.tags){ %>
-	<li><% print(hobby) %></li><% } %>
+<ul><% for(let tag of data.tags){ %>
+	<li><% print(tag) %></li><% } %>
 </ul>`
 		let data = {
 			name: "<<Alice&Bob>>",
