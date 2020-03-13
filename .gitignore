@@ -5,3 +5,5 @@ dist/
 tsconfig.tsbuildinfo
 .DS_Store
 .nyc_output/
+benchmark/tmp.js
+coverage
