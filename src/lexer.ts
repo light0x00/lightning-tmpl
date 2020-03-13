@@ -1,6 +1,6 @@
 import { TokenPro, IToken, Terminal, EOF } from "@parser-generator/definition"
 import Queue from "typescript-collections/dist/lib/Queue"
-import { MutableString } from "./common"
+import { replaceSubstring } from "./common"
 
 const DEFAULT_SOURCE_NAME = "anonymous.tmpl"
 
@@ -174,7 +174,7 @@ export class Lexer extends AbstractLexer<Token>{
 				return new Token("<%=", IN_DS)
 			} else if (this.peekChr(0) == "@") {
 				this.readChr()  // @
-				return new Token("<%@",LN_DS) 
+				return new Token("<%@", LN_DS)
 			} else {
 				return new Token("<%", EV_DS)
 			}
@@ -236,7 +236,9 @@ export class Lexer extends AbstractLexer<Token>{
 				break
 			}
 		}
-		let lexeme = MutableString.replaceSubstring(this.text, replaces, startIndex, this.lastIndex)
+		// let lexeme = MutableString.replaceSubstring(this.text, replaces, startIndex, this.lastIndex)
+		// this.text.substring(startIndex,this.lastIndex)
+		let lexeme = replaceSubstring(this.text, replaces, startIndex, this.lastIndex)
 		return new Token(lexeme, CONTENT)
 	}
 

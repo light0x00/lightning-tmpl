@@ -30,7 +30,7 @@ type BeforeCodegenAppend = (generated: string, original: Token, needMapping: boo
 
 export class CodegenVisitor implements ASTVisitor {
 
-	protected generatedCode: string[] = []
+	protected tmplGenerated = ""
 	private context: CodegenVisitorContext
 	private template: TemplateNode
 	private astLoader: ASTLoader
@@ -45,12 +45,12 @@ export class CodegenVisitor implements ASTVisitor {
 
 	apply(): string {
 		this.visitTemplateNode(this.template)
-		return this.generatedCode.join("")
+		return this.tmplGenerated
 	}
 
 	private append(generated: string, original: Token, needMapping = false) {
 		this.beforeAppend(generated, original, needMapping)
-		this.generatedCode.push(generated)
+		this.tmplGenerated += generated
 	}
 
 	private contact(code: string, original: Token, needMapping = false) {
@@ -65,13 +65,11 @@ export class CodegenVisitor implements ASTVisitor {
 	}
 
 	visitLinkNode(node: LinkNode) {
-		//1.调用 template-loader 传入sourceName, 得到AST
-		//2.new CodegenVisitor(AST,this.context).apply()
 		let sourceName = node.sourceNameToken.lexeme.trim()
 		// console.log("导入:\n" + sourceName)
 		let ast = this.astLoader(sourceName)
-		let generated = new CodegenVisitor(ast, { loader: this.astLoader, beforeAppend: this.beforeAppend }, this.context).apply()
-		this.generatedCode.push(generated) //
+		let subTmplGenerated = new CodegenVisitor(ast, { loader: this.astLoader, beforeAppend: this.beforeAppend }, this.context).apply()
+		this.tmplGenerated += subTmplGenerated
 	}
 
 	visitFactorNode(node: FactorNode) {
@@ -145,7 +143,7 @@ export function codegen(ast: TemplateNode, options: CodegenOptions) {
 	let visitor = new CodegenVisitor(ast, {
 		loader: options.astLoader,
 		beforeAppend(g: string, o: Token, n: boolean) {
-			if (options.soureMap) { 
+			if (options.soureMap) {
 				sourceMapper!.onAppend(g, o, n) //收集模版到源码的映射信息
 			}
 		}
@@ -164,9 +162,6 @@ export function codegen(ast: TemplateNode, options: CodegenOptions) {
 	}
 }
 
-/****************************************
-工具
-****************************************/
 type SourceMapping = {
 	source: string,
 	original: { line: number, column: number },
