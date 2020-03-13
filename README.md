@@ -39,8 +39,8 @@ import template from "light-template";
 //模版
 let tmpl =`<p><%- data.name %><p>
 <p><%= data.desc %></p>
-<ul><% for(let hobby of data.tags){ %>
-<li><% print(hobby) %></li><% } %>
+<ul><% for(let tag of data.tags){ %>
+<li><% print(tag) %></li><% } %>
 </ul>`
 //数据
 let data = {
@@ -76,7 +76,7 @@ console.log(result)
 </ul>
 ```
 
-更丰富的例子参考 ➡️ [示例](https://github.com/light0x00/light-template/examples)
+更丰富的例子参考 ➡️ [示例](https://github.com/light0x00/light-template/tree/master/examples)
 
 ## 语法
 
