@@ -1,20 +1,20 @@
 # Light-Template
 
-一个基于JavaScript的模版DSL
+A Template Engine for JavaScript.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <a href="https://travis-ci.com/light0x00/light-template"><img src="https://travis-ci.com/light0x00/light-template.svg?branch=master"></a> 
 <a href="https://www.npmjs.com/package/light-template"><img src="https://img.shields.io/npm/v/light-template"></a>
 
-## 特性
+## Features
 
-- 用原生JS控制模版的渲染
-- 支持子模版链接
-- 支持模版调试
+- Using original JS syntax to control how to render your template.
+- Supporting sub-template reference
+- Supporting debugging directly on template .
 
 ![img](./docs/debug-demo.png)
 
-## 安装
+## Install
 
 **npm**
 
@@ -31,18 +31,18 @@ npm install light-template
 </script>
 ```
 
-## 示例
+## Getting started
 
 ```ts
 import template from "light-template";
 
-//模版
+//write down your template here
 let tmpl =`<p><%- data.name %><p>
 <p><%= data.desc %></p>
 <ul><% for(let tag of data.tags){ %>
 <li><% print(tag) %></li><% } %>
 </ul>`
-//数据
+//write down your data object here
 let data = {
 	name: "<<Alice&Bob>>",
 	desc: "How do Alice and Bob prevent Truck",
@@ -54,15 +54,15 @@ let data = {
 		"CA"
 	]
 }
-//编译
+//compile the template
 let executor = template(tmpl, { variable: "data", soureMap: true }) 
-//执行
+//use the data to render the template
 let result = executor.render(data)
 
 console.log(result)
 ```
 
-输出:
+Output:
 
 ```html
 <p>&lt;&lt;Alice&amp;Bob&gt;&gt;<p>
@@ -76,13 +76,13 @@ console.log(result)
 </ul>
 ```
 
-更丰富的例子参考 ➡️ [示例](https://github.com/light0x00/light-template/tree/master/examples)
+To get a more complex example to reference ➡️ [示例](https://github.com/light0x00/light-template/tree/master/examples)
 
-## 语法
+## Syntax
 
-语法基本与 [lodash.template](https://lodash.com/docs/4.17.15#template) 相同,但新增了一个链接指令.
+The syntax is mainly as same as [lodash.template](https://lodash.com/docs/4.17.15#template) , the only difference is that there is a new infstruction called 'sub-template link'.
 
-**插值指令**
+**Interpolation**
 
 `<%=`,顾名思义,就是插入一个值
 
@@ -98,7 +98,7 @@ console.log(result)
 // <p>Hello World<p>
 ```
 
-**HTML转义指令**
+**HTML Escape**
 
 `<%-` 可用于转义HTML保留字符
 
@@ -114,9 +114,9 @@ console.log(result)
 // <p>&lt;img src=&quot;xss&quot;&gt;<p>
 ```
 
-**脚本块指令**
+**Script**
 
-`<%` `%>` 之间可以编写任意的JS代码,提供了一个内置的print函数,用于输出内容到最终的模版.
+Between `<%` and `%>` , you can write any JavaScript Code. What's more, it offers a built-in function `print` to output the JS object to the final rendering result.
 
 ```ts
 let tmpl =`<ul>
@@ -137,28 +137,32 @@ console.log(result)
 // </ul>
 ```
 
-**链接子模版**
+**Link Sub-Template**
 
-`<%@` `%>` 之间可以指定要插入的子模版的名称,当light-template遇到链接指令时,都将要链接的模版名称传给加载器,由加载器返回模版的内容,然后进行编译. 需注意,这个名称不一定是路径名,只要可以标识一个唯一的模版即可.
+Between `<%@` and `%>`, you can specify the template name which you want to link.  The other side, you can pass `sourceLoader` to find the template using the name you specified in template. 
+
+whenever `light-template` encountered a sub-template link instruction, it pass the template name to `sourceLoader` that you offered and get the return value as the target sub-template to compile. 
+Note the template name is not required being a path name, you can specify its form as your whish, just make sure it can be found by `sourceLoader` you passed.
 
 ```ts
 let tmpls = new Map()
 tmpls.set("greeting.tmpl", `Hello,<%= user.name %>`)
 
-//模版加载器
+// Specify template sourceLoader
 let sourceLoader = (sourceName) => {
 	if (!tmpls.has(sourceName))
 		throw new Error("Can't find template named " + sourceName)
 	return tmpls.get(sourceName)
 }
 
-//入口模版
-let entry = `<p><%@ greeting.tmpl %></p>`  // 使用 <%@ 链接一个子模版
+// entry template
+// Use `<%@ @>` to specify the template name which you want to link.
+let entry = `<p><%@ greeting.tmpl %></p>`
 
-//编译
+// pass the entry template and the options object with sourceLoader.
 let exe = template(entry, { variable: "user", sourceLoader, soureMap: true })
 
-//渲染
+// pass the data object to render final template
 let result = exe.render({ name: "Alice" })
 
 console.log(result)
@@ -167,22 +171,22 @@ console.log(result)
 // <p>Hello,Alice</p>
 ```
 
-**保留字符转义**
+**Reserved words Escape**
 
-`<%`、`%>`是保留字符, 如果要用作文本,使用`\`转义
+`<%` and `%>` are reserved words. Use `\` to escape it if you want to put it as a raw text on your template.
 
 ```ts
-let tmpl ="脚本块的语法是:\\<% code \\%>"  //这里有两个`\` 是因为`\`在JS中也是特殊字符,因此要加一个`\`转义
+let tmpl ="Using the reserved words as raw worlds: \\<% code \\%>"
 let result = template(tmpl, { variable: "data", soureMap: true }).render({})
 
 console.log(result)
 // output:
-//脚本块的语法是:<% code %>
+//Using the reserved words as raw worlds: <% code %>
 ```
 
-## 原理
+## Principle
 
-将模版编译为一个JavaScript函数, 该函数接收一个data,以拼接字符串的形式生成最终的模版.
+It compiles a template to a JS function, and the function has a parameter receiving a data object, that will decide the final rendering result. 
 
 ```html
 <p><%= data.greeting %><p>
@@ -200,44 +204,25 @@ function(data){
 
 ## API
 
-**template**
+**template()**
 
 ```ts
 template(tmpl: string, options?: TemplateSettings): TemplateExecutor
 ```
 
-- tmpl ,模版内容
+- tmpl ,specify the template content
 - TemplateSettings
-	- `variable?: string`,指定数据对象在模版中的变量名,可通过该变量引用数据对象
-	- `soureMap?: boolean`,是否生成sourceMap
-	- `sourceName? : string` ,指定入口模版的名称,在调试的时候方便区分模版.
-	- `sourceLoader? : (soureName :string)=>string`, 模版源码加载器,当要使用子模版嵌入指令(`<%@`)时须指定,该函数接收一个模版名称,返回模版内容.
+	- `variable?: string`, specify the variable name of your data object, you can use it to access your data object.
+	- `soureMap?: boolean`,whether generate a sourceMap,if you want to debug you can set `true`.
+	- `sourceName? : string` ,specify the entry template name, if you used 「sub-template link」, you can use set a name for entry template, it's helpful to differentiate different template when you are debuging.
+	- `sourceLoader? : (soureName :string)=>string`, A function used to resolve the sub-template,receving a template name, returning the template content.if you used the feature「sub-template link」,it‘s required.
 - TemplateExecutor
-	- `render(data :any)`,接收一个数据对象对模版进行渲染
-	- `source: string`,生成的渲染函数
+	- `render(data :any)`, receve a data object to render the template.
+	- `source: string`,A segment of JavaScript code generated from the template you pass.
 
-**compile**
+**compile()**
 
 ```ts
 compile(tmpl: string, settings?: TemplateSettings): string
 ```
-与template的区别是,此方法仅返回渲染函数的字符串形式. 
-
-## 其他
-
-**with**
-
-JS中的with关键字可以将一个变量的属性作为一个作用域的上下文
-
-```js
-let obj = { x :1 ,y:2 }
-with(obj){
-	//可以直接使用obj的属性
-	z=x+y
-}
-```
-
-如果把这一特性用在模版中,原本要`<%= data.greeting %>`,而现在可直接通过 `<%= greeting %>`访问数据对象.
-但是,with是一个过期的特性,strict 模式中使用with会直接抛出异常, 因此舍弃了提供该功能.
-
-
+The Only one difference with `template()` is that it only returns the JavaScript code generated from the template you pass.
