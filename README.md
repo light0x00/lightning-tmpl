@@ -6,6 +6,8 @@ A Template Engine for JavaScript.
 <a href="https://travis-ci.com/light0x00/light-template"><img src="https://travis-ci.com/light0x00/light-template.svg?branch=master"></a> 
 <a href="https://www.npmjs.com/package/light-template"><img src="https://img.shields.io/npm/v/light-template"></a>
 
+[中文文档](./README.zh.md)
+
 ## Features
 
 - Using original JS syntax to control how to render your template.
@@ -84,7 +86,7 @@ The syntax is mainly as same as [lodash.template](https://lodash.com/docs/4.17.1
 
 **Interpolation**
 
-`<%=`,顾名思义,就是插入一个值
+Between `<%=` and `%>`,you can write a JS expression, also access the property of the data object which you passed ,and it will appear in the final rendering result.
 
 ```ts
 let tmpl =`<p><%= data.greeting %><p>`
@@ -100,7 +102,7 @@ console.log(result)
 
 **HTML Escape**
 
-`<%-` 可用于转义HTML保留字符
+Between `<%-` and `%>`, it's almost the same as `<%= ... %>`, except the HTML reserved characters will be escaped. This can avoid the XSS attack.
 
 ```ts
 let tmpl =`<p><%- data.greeting %><p>`
@@ -116,7 +118,7 @@ console.log(result)
 
 **Script**
 
-Between `<%` and `%>` , you can write any JavaScript Code. What's more, it offers a built-in function `print` to output the JS object to the final rendering result.
+Between `<%` and `%>` , you can write any JavaScript Code. What's more, it offers a built-in function `print` to output the value of a JS object to the final rendering result.
 
 ```ts
 let tmpl =`<ul>
@@ -139,10 +141,10 @@ console.log(result)
 
 **Link Sub-Template**
 
-Between `<%@` and `%>`, you can specify the template name which you want to link.  The other side, you can pass `sourceLoader` to find the template using the name you specified in template. 
+Between `<%@` and `%>`, you can specify the name of the template which you want to link.  The other side, you can pass `sourceLoader` to find the template using the name you specified in template. 
 
-whenever `light-template` encountered a sub-template link instruction, it pass the template name to `sourceLoader` that you offered and get the return value as the target sub-template to compile. 
-Note the template name is not required being a path name, you can specify its form as your whish, just make sure it can be found by `sourceLoader` you passed.
+whenever `light-template` encountered a sub-template link instruction, it pass the name of the template to `sourceLoader` that you offered, and get the returning value as the target sub-template to compile. 
+Note the name of the template is not required being a path name, you can specify its form as your wish, just make sure it can be found by `sourceLoader` you passed.
 
 ```ts
 let tmpls = new Map()
@@ -226,3 +228,19 @@ template(tmpl: string, options?: TemplateSettings): TemplateExecutor
 compile(tmpl: string, settings?: TemplateSettings): string
 ```
 The Only one difference with `template()` is that it only returns the JavaScript code generated from the template you pass.
+## Others
+
+**with**
+
+The keyword `with` can directly access the property of a object as the context in a scope.
+
+```js
+let obj = { x :1 ,y:2 }
+with(obj){
+	//here can directly use the property of a object.
+	z=x+y
+}
+```
+
+For example, originally you need use `<%= data.greeting %>`,but now you can just use `<%= greeting %>` to access a property if use this feature into template.However,the keyword `with` in JS is outdated, it's not recommended to use now. In strict mode,even the JS Runtime will throw an error. So i didn't implement the feature which may simplify the use.
+

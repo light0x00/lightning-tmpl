@@ -1,6 +1,6 @@
 # Light-Template
 
-一个基于JavaScript的模版DSL
+一个JavaScript的模版引擎.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <a href="https://travis-ci.com/light0x00/light-template"><img src="https://travis-ci.com/light0x00/light-template.svg?branch=master"></a> 
@@ -84,7 +84,7 @@ console.log(result)
 
 **插值指令**
 
-`<%=`,顾名思义,就是插入一个值
+`<%=` `%>`之间,你可以写一个JS表达式,当然,在这个作用域中,你也可以访问你传入的数据对象,其最终会出现在渲染结果中.
 
 ```ts
 let tmpl =`<p><%= data.greeting %><p>`
@@ -100,7 +100,7 @@ console.log(result)
 
 **HTML转义指令**
 
-`<%-` 可用于转义HTML保留字符
+`<%-` `%>`,它基本上和 `<%=` `%>`相同,除了会转义HTML保留字符. 这可以避免XSS注入.
 
 ```ts
 let tmpl =`<p><%- data.greeting %><p>`
