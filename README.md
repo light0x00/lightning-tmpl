@@ -242,5 +242,5 @@ with(obj){
 }
 ```
 
-For example, originally you need use `<%= data.greeting %>`,but now you can just use `<%= greeting %>` to access a property if use this feature into template.However,the keyword `with` in JS is outdated, it's not recommended to use now. In strict mode,even the JS Runtime will throw an error. So i didn't implement the feature which may simplify the use.
+For example, originally you need use `<%= data.greeting %>`,but now you can just use `<%= greeting %>` to access a property if bringing in this feature into Light-Template.However,the keyword `with` in JS is outdated, it's not recommended to use now. In strict mode,even the JS Runtime will throw an error. So i didn't implement the feature which may simplify the use.
 
