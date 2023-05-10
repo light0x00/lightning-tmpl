@@ -1,6 +1,6 @@
 # Light-Template
 
-A template engine similar to lodash template.
+A template engine similar to [lodash.template](https://lodash.com/docs/4.17.15#template).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <a href="https://travis-ci.com/light0x00/light-template"><img src="https://travis-ci.com/light0x00/light-template.svg?branch=master"></a> 
