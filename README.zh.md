@@ -6,6 +6,8 @@
 <a href="https://travis-ci.com/light0x00/light-template"><img src="https://travis-ci.com/light0x00/light-template.svg?branch=master"></a> 
 <a href="https://www.npmjs.com/package/light-template"><img src="https://img.shields.io/npm/v/light-template"></a>
 
+[English](./README.md) | 中文
+
 ## 特性
 
 - 用原生JS控制模版的渲染
