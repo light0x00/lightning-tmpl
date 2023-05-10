@@ -1,6 +1,6 @@
 # Light-Template
 
-一个JavaScript的模版引擎.
+一个与 [lodash.template](https://lodash.com/docs/4.17.15#template) 相似的模版引擎.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <a href="https://travis-ci.com/light0x00/light-template"><img src="https://travis-ci.com/light0x00/light-template.svg?branch=master"></a> 
